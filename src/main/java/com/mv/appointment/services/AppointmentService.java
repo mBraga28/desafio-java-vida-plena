@@ -25,13 +25,8 @@ public class AppointmentService {
 
     public Appointment create(Appointment appointment) {
 
-        if (appointment.getAppointmentDateTime() == null) {
-            throw new BusinessException("Appointment date/time must be provided.");
-        }
-
-        if (appointment.getAppointmentDateTime().isBefore(LocalDateTime.now())) {
-            throw new BusinessException("Appointment date/time cannot be in the past.");
-        }
+        validateAppointment(appointment);
+        validateAppointmentDateTime(appointment);
 
         appointment.setStatus(AppointmentStatus.SCHEDULED);
 
@@ -58,16 +53,13 @@ public class AppointmentService {
     public Appointment update(Appointment appointment) {
         Appointment existing = findById(appointment.getId());
 
+        validateAppointment(existing);
+
         if (existing.getStatus() != AppointmentStatus.SCHEDULED) {
             throw new BusinessConflictException("Only SCHEDULED appointments can be updated.");
         }
 
-        if (appointment.getAppointmentDateTime() == null) {
-            throw new BusinessException("Appointment date/time must be provided.");
-        }
-        if (appointment.getAppointmentDateTime().isBefore(LocalDateTime.now())) {
-            throw new BusinessException("Appointment date/time cannot be in the past.");
-        }
+        validateAppointmentDateTime(appointment);
 
         existing.setAppointmentDateTime(appointment.getAppointmentDateTime());
         existing.setDoctorName(appointment.getDoctorName());
@@ -105,5 +97,29 @@ public class AppointmentService {
         }
 
         appointmentRepository.deleteById(id);
+    }
+
+    private void validateAppointment(Appointment appointment) {
+
+        Optional<Appointment> existingAppointment = appointmentRepository.findAll().stream()
+                .filter(a -> a.getDoctorName().equals(appointment.getDoctorName())
+                        && a.getSpecialty().equals(appointment.getSpecialty())
+                        && a.getAppointmentDateTime().equals(appointment.getAppointmentDateTime()))
+                .findFirst();
+
+        if (existingAppointment.isPresent()) {
+            throw new BusinessConflictException("An appointment already exists for the same doctor, specialty, and date/time.");
+        }
+
+    }
+
+    private void validateAppointmentDateTime(Appointment appointment) {
+        if (appointment.getAppointmentDateTime() == null) {
+            throw new BusinessException("Appointment date/time must be provided.");
+        }
+
+        if (appointment.getAppointmentDateTime().isBefore(LocalDateTime.now())) {
+            throw new BusinessException("Appointment date/time cannot be in the past.");
+        }
     }
 }

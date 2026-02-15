@@ -1,9 +1,11 @@
 package com.mv.appointment.repositories;
 
 import com.mv.appointment.domain.entities.Appointment;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
 public interface AppointmentRepository extends JpaRepository<Appointment, Long> {
+
 }
