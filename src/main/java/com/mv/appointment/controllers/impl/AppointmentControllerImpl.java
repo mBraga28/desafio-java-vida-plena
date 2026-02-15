@@ -3,6 +3,7 @@ package com.mv.appointment.controllers.impl;
 import com.mv.appointment.controllers.AppointmentController;
 import com.mv.appointment.domain.entities.Appointment;
 import com.mv.appointment.dtos.AppointmentDTO;
+import com.mv.appointment.dtos.AppointmentStatusDTO;
 import com.mv.appointment.services.AppointmentService;
 
 import java.net.URI;
@@ -53,4 +54,28 @@ public class AppointmentControllerImpl implements AppointmentController {
         Appointment appointment = appointmentService.findById(id);
         return ResponseEntity.ok().body(modelMapper.map(appointment, AppointmentDTO.class));
     }
+
+    @Override
+    @PutMapping(value = {"/{id}"})
+    public ResponseEntity<AppointmentDTO> update(@PathVariable Long id, @RequestBody AppointmentDTO newStatus) {
+        Appointment appointment = modelMapper.map(newStatus, Appointment.class);
+        appointment.setId(id);
+        Appointment updatedAppointment = appointmentService.update(appointment);
+        return ResponseEntity.ok().body(modelMapper.map(updatedAppointment, AppointmentDTO.class));
+    }
+
+    @Override
+    @PutMapping(value = {"/{id}/status"})
+    public ResponseEntity<AppointmentDTO> updateStatus(@PathVariable Long id, @RequestBody AppointmentStatusDTO statusDTO) {
+        Appointment updated = appointmentService.updateStatus(id, statusDTO.getStatus());
+        return ResponseEntity.ok().body(modelMapper.map(updated, AppointmentDTO.class));
+    }
+
+    @Override
+    @DeleteMapping(value = {"/{id}"})
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        appointmentService.delete(id);
+        return ResponseEntity.noContent().build();
+    }
+
 }
