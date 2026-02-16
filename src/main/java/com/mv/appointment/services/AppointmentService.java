@@ -2,11 +2,11 @@ package com.mv.appointment.services;
 
 import com.mv.appointment.domain.entities.Appointment;
 import com.mv.appointment.domain.enums.AppointmentStatus;
-import com.mv.appointment.dtos.AppointmentDTO;
 import com.mv.appointment.exceptions.BusinessConflictException;
 import com.mv.appointment.exceptions.BusinessException;
 import com.mv.appointment.exceptions.ObjectNotFoundException;
 import com.mv.appointment.repositories.AppointmentRepository;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +23,7 @@ public class AppointmentService {
         this.appointmentRepository = appointmentRepository;
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST')")
     public Appointment create(Appointment appointment) {
 
         validateAppointment(appointment);
@@ -33,8 +34,10 @@ public class AppointmentService {
         return appointmentRepository.save(appointment);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','DOCTOR')")
     @Transactional(readOnly = true)
     public List<Appointment> findAll() {
+
         List<Appointment> list = appointmentRepository.findAll();
 
         if (list.isEmpty()) {
@@ -44,16 +47,19 @@ public class AppointmentService {
         return list;
     }
 
-    //@Transactional(readOnly = true)
+    @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','DOCTOR')")
     public Appointment findById(Long id) {
+
         Optional<Appointment> appointment = appointmentRepository.findById(id);
         return appointment.orElseThrow(() -> new ObjectNotFoundException("Appointment not found with the ID:" + id));
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST')")
     public Appointment update(Appointment appointment) {
+
         Appointment existing = findById(appointment.getId());
 
-        validateAppointment(existing);
+        validateAppointment(appointment);
 
         if (existing.getStatus() != AppointmentStatus.SCHEDULED) {
             throw new BusinessConflictException("Only SCHEDULED appointments can be updated.");
@@ -65,7 +71,7 @@ public class AppointmentService {
         existing.setDoctorName(appointment.getDoctorName());
         existing.setSpecialty(appointment.getSpecialty());
 
-        // só atualiza o status se vier no payload (evita sobrescrever com null)
+        // only allow status update if it's provided in the request and is different from the current status
         if (appointment.getStatus() != null) {
             existing.setStatus(appointment.getStatus());
         }
@@ -73,7 +79,9 @@ public class AppointmentService {
         return appointmentRepository.save(existing);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','DOCTOR')")
     public Appointment updateStatus(Long id, AppointmentStatus newStatus) {
+
         Appointment existing = findById(id);
 
         if (existing.getStatus() == AppointmentStatus.COMPLETED) {
@@ -89,7 +97,9 @@ public class AppointmentService {
         return appointmentRepository.save(existing);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     public void delete(Long id) {
+
         Appointment existing = findById(id);
 
         if (existing.getStatus() == AppointmentStatus.COMPLETED) {

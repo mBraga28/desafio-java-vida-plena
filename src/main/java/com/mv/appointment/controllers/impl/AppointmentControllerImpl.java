@@ -6,8 +6,6 @@ import com.mv.appointment.dtos.AppointmentDTO;
 import com.mv.appointment.dtos.AppointmentStatusDTO;
 import com.mv.appointment.services.AppointmentService;
 
-import java.net.URI;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 

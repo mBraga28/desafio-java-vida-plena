@@ -5,7 +5,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-
 import java.time.LocalDateTime;
 
 @RestControllerAdvice
@@ -36,7 +35,8 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(BusinessConflictException.class)
-    public ResponseEntity<StandardError> handleBusinessConflict(BusinessConflictException e, HttpServletRequest request) {
+    public ResponseEntity<StandardError> handleBusinessConflict(BusinessConflictException e,
+            HttpServletRequest request) {
 
         StandardError error = new StandardError(
                 LocalDateTime.now(),
@@ -47,5 +47,39 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<StandardError> handleAccessDenied(AccessDeniedException e, 
+            HttpServletRequest request) {
+        StandardError err = new StandardError(
+                LocalDateTime.now(), 
+                HttpStatus.FORBIDDEN.value(), 
+                "Access Denied",
+                e.getMessage(), 
+                request.getRequestURI());
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(err);
+    }
+
+    @ExceptionHandler(CustomAuthenticationException.class)
+    public ResponseEntity<StandardError> handleCustomAuthenticationException(CustomAuthenticationException e, HttpServletRequest request) {
+        StandardError error = new StandardError(
+                LocalDateTime.now(),
+                HttpStatus.UNAUTHORIZED.value(),
+                "Authentication Failed",
+                e.getMessage(),
+                request.getRequestURI());
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+    }
+
+    @ExceptionHandler(TokenDeniedException.class)
+    public ResponseEntity<StandardError> handleTokenDenied(TokenDeniedException e, HttpServletRequest request) {
+        StandardError error = new StandardError(
+                LocalDateTime.now(),
+                HttpStatus.UNAUTHORIZED.value(),
+                "Token Denied",
+                e.getMessage(),
+                request.getRequestURI());
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+    }           
 
 }
