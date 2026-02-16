@@ -1,4 +1,4 @@
-package com.mv.appointment.domain.entities;
+package com.mv.appointment.domain.enums;
 
 public enum Role {
     ROLE_ADMIN,

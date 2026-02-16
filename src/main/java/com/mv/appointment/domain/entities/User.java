@@ -1,5 +1,6 @@
 package com.mv.appointment.domain.entities;
 
+import com.mv.appointment.domain.enums.Role;
 import jakarta.persistence.*;
 
 import java.util.HashSet;

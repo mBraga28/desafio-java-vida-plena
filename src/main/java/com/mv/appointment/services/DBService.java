@@ -1,6 +1,6 @@
 package com.mv.appointment.services;
 
-import com.mv.appointment.domain.entities.Role;
+import com.mv.appointment.domain.enums.Role;
 import com.mv.appointment.domain.entities.User;
 import com.mv.appointment.domain.entities.Appointment;
 import com.mv.appointment.domain.enums.AppointmentStatus;
@@ -14,10 +14,9 @@ import jakarta.annotation.PostConstruct;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Set;
 
 @Service
-@Profile({"test"})
+@Profile({"dev"})
 public class DBService {
 
     private final UserRepository userRepository;
