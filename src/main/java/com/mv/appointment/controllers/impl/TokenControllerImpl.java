@@ -1,6 +1,5 @@
 package com.mv.appointment.controllers.impl;
 
-
 import java.time.Instant;
 
 import org.springframework.http.ResponseEntity;
@@ -19,7 +18,12 @@ import com.mv.appointment.dtos.LoginResponse;
 import com.mv.appointment.exceptions.CustomAuthenticationException;
 import com.mv.appointment.repositories.UserRepository;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
+@Tag(name = "Auth", description = "Autenticação e geração de token JWT")
 @RestController
 @RequestMapping("/token")
 public class TokenControllerImpl implements TokenController {
@@ -35,13 +39,19 @@ public class TokenControllerImpl implements TokenController {
 		this.passwordEncoder = passwordEncoder;
 	}
 
+	@Operation(summary = "Realizar login e gerar token JWT")
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "Login realizado com sucesso"),
+			@ApiResponse(responseCode = "401", description = "Credenciais inválidas")
+	})
 	@PostMapping("/login")
 	public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest loginRequest) {
 		var user = userRepository.findByUsername(loginRequest.username());
 
 		/*
 		 * If the user is not found or the provided password does not match the one
-		 * stored in the database, throws a custom exception for incorrect authentication.
+		 * stored in the database, throws a custom exception for incorrect
+		 * authentication.
 		 */
 		if (user.isEmpty() || !user.get().isLoginCorrect(loginRequest, passwordEncoder)) {
 			throw new CustomAuthenticationException(
@@ -52,26 +62,28 @@ public class TokenControllerImpl implements TokenController {
 		var expiresIn = 900L; // Time of token expiration in seconds (15 minutes)
 
 		/*
-		 * Builds the set of claims for the JWT, including the issuer, subject, issued at
+		 * Builds the set of claims for the JWT, including the issuer, subject, issued
+		 * at
 		 * time, expiration time, and custom claims for user roles and scopes.
 		 */
 		var claims = JwtClaimsSet.builder()
-									.issuer("mybackend")
-									.subject(user.get().getUsername())
-									.issuedAt(now)
-									.expiresAt(now.plusSeconds(expiresIn))
-									.claim("scope", 
-										user.get().getRoles().stream()
-											.map(Enum::name)
-											.toList())
-									.claim("roles",
-										user.get().getRoles().stream()
-											.map(Enum::name)
-											.toList())
-									.build();
+				.issuer("mybackend")
+				.subject(user.get().getUsername())
+				.issuedAt(now)
+				.expiresAt(now.plusSeconds(expiresIn))
+				.claim("scope",
+						user.get().getRoles().stream()
+								.map(Enum::name)
+								.toList())
+				.claim("roles",
+						user.get().getRoles().stream()
+								.map(Enum::name)
+								.toList())
+				.build();
 
 		/*
-		 * Codifies the set of claims into a JWT token and returns the token value in the response.
+		 * Codifies the set of claims into a JWT token and returns the token value in
+		 * the response.
 		 */
 		var jwtValue = jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
 		return ResponseEntity.ok(new LoginResponse(jwtValue, expiresIn, "Welcome!"));

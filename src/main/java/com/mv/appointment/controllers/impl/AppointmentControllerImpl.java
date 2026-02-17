@@ -6,6 +6,11 @@ import com.mv.appointment.dtos.AppointmentDTO;
 import com.mv.appointment.dtos.AppointmentStatusDTO;
 import com.mv.appointment.services.AppointmentService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -15,6 +20,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 // import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+@Tag(name = "Appointments", description = "Gerenciamento de atendimentos")
 @RestController
 @RequestMapping(value = "appointment")
 public class AppointmentControllerImpl implements AppointmentController {
@@ -28,6 +34,12 @@ public class AppointmentControllerImpl implements AppointmentController {
         this.modelMapper = modelMapper;
     }
 
+    @Operation(summary = "Criar um novo atendimento")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Atendimento criado"),
+            @ApiResponse(responseCode = "400", description = "Dados inválidos"),
+            @ApiResponse(responseCode = "401", description = "Não autenticado")
+    })
     @Override
     @PostMapping
     public ResponseEntity<AppointmentDTO> create(@RequestBody AppointmentDTO appointmentDTO) {
@@ -36,6 +48,11 @@ public class AppointmentControllerImpl implements AppointmentController {
         return ResponseEntity.status(HttpStatus.CREATED).body(modelMapper.map(savedAppointment, AppointmentDTO.class));
     }
 
+    @Operation(summary = "Listar todos os atendimentos")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Lista retornada com sucesso"),
+            @ApiResponse(responseCode = "401", description = "Não autenticado")
+    })
     @Override
     @GetMapping
     public ResponseEntity<List<AppointmentDTO>> findAll() {
@@ -46,15 +63,25 @@ public class AppointmentControllerImpl implements AppointmentController {
                 .collect(Collectors.toList()));
     }
 
+    @Operation(summary = "Buscar atendimento por ID")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Atendimento encontrado"),
+            @ApiResponse(responseCode = "404", description = "Não encontrado")
+    })
     @Override
-    @GetMapping(value = {"/{id}"})
+    @GetMapping(value = { "/{id}" })
     public ResponseEntity<AppointmentDTO> findById(@PathVariable Long id) {
         Appointment appointment = appointmentService.findById(id);
         return ResponseEntity.ok().body(modelMapper.map(appointment, AppointmentDTO.class));
     }
 
+    @Operation(summary = "Atualizar atendimento")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Atualizado"),
+            @ApiResponse(responseCode = "409", description = "Regra de negócio violada")
+    })
     @Override
-    @PutMapping(value = {"/{id}"})
+    @PutMapping(value = { "/{id}" })
     public ResponseEntity<AppointmentDTO> update(@PathVariable Long id, @RequestBody AppointmentDTO newStatus) {
         Appointment appointment = modelMapper.map(newStatus, Appointment.class);
         appointment.setId(id);
@@ -62,15 +89,22 @@ public class AppointmentControllerImpl implements AppointmentController {
         return ResponseEntity.ok().body(modelMapper.map(updatedAppointment, AppointmentDTO.class));
     }
 
+    @Operation(summary = "Atualizar status do atendimento")
     @Override
-    @PutMapping(value = {"/{id}/status"})
-    public ResponseEntity<AppointmentDTO> updateStatus(@PathVariable Long id, @RequestBody AppointmentStatusDTO statusDTO) {
+    @PutMapping(value = { "/{id}/status" })
+    public ResponseEntity<AppointmentDTO> updateStatus(@PathVariable Long id,
+            @RequestBody AppointmentStatusDTO statusDTO) {
         Appointment updated = appointmentService.updateStatus(id, statusDTO.getStatus());
         return ResponseEntity.ok().body(modelMapper.map(updated, AppointmentDTO.class));
     }
 
+    @Operation(summary = "Remover atendimento")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Removido"),
+            @ApiResponse(responseCode = "404", description = "Não encontrado")
+    })
     @Override
-    @DeleteMapping(value = {"/{id}"})
+    @DeleteMapping(value = { "/{id}" })
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         appointmentService.delete(id);
         return ResponseEntity.noContent().build();

@@ -14,6 +14,7 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.converter.RsaKeyConverters;
@@ -25,6 +26,7 @@ import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
 
 import java.io.IOException;
 import java.security.interfaces.RSAPrivateKey;
@@ -51,21 +53,51 @@ public class SecurityConfig {
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
 
-        httpSecurity.authorizeHttpRequests(authorize -> authorize
-                // Define access rules for the login endpoint, allowing anyone to access it without authentication
-                .requestMatchers(HttpMethod.POST, "/token/login").permitAll()
-                // Define access rules for appointment endpoints based on user roles
-                .requestMatchers(HttpMethod.GET, "/appointment/**").hasAnyAuthority("ROLE_ADMIN","ROLE_RECEPTIONIST","ROLE_DOCTOR")
-                .requestMatchers(HttpMethod.POST, "/appointment/**").hasAnyAuthority("ROLE_ADMIN","ROLE_RECEPTIONIST")
-                .requestMatchers(HttpMethod.PUT, "/appointment/*/status").hasAnyAuthority("ROLE_ADMIN","ROLE_DOCTOR")
-                .requestMatchers(HttpMethod.PUT, "/appointment/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_RECEPTIONIST")
-                .requestMatchers(HttpMethod.DELETE, "/appointment/**").hasAuthority("ROLE_ADMIN")
-                .anyRequest().authenticated())
+        httpSecurity
+
                 .csrf(csrf -> csrf.disable())
+                .cors(Customizer.withDefaults())
+                .authorizeHttpRequests(authorize -> authorize
+
+                        // login
+                        .requestMatchers(HttpMethod.POST, "/token/login").permitAll()
+
+                        // Swagger / OpenAPI (permita tudo que o swagger-ui pode requisitar)
+                        // .requestMatchers(
+                        // "/v3/api-docs",
+                        // "/v3/api-docs/**",
+                        // "/swagger-ui/**",
+                        // "/swagger-ui.html",
+                        // "/swagger-resources/**",
+                        // "/webjars/**")
+                        // .permitAll()
+
+                        // regras da API
+                        .requestMatchers(HttpMethod.GET, "/appointment/**")
+                        .hasAnyAuthority("ROLE_ADMIN", "ROLE_RECEPTIONIST", "ROLE_DOCTOR")
+                        .requestMatchers(HttpMethod.POST, "/appointment/**")
+                        .hasAnyAuthority("ROLE_ADMIN", "ROLE_RECEPTIONIST")
+                        .requestMatchers(HttpMethod.PUT, "/appointment/*/status")
+                        .hasAnyAuthority("ROLE_ADMIN", "ROLE_DOCTOR")
+                        .requestMatchers(HttpMethod.PUT, "/appointment/**")
+                        .hasAnyAuthority("ROLE_ADMIN", "ROLE_RECEPTIONIST")
+                        .requestMatchers(HttpMethod.DELETE, "/appointment/**").hasAuthority("ROLE_ADMIN")
+                        .anyRequest().authenticated())
                 .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
-                .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))
+                .oauth2ResourceServer(
+                        oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
         return httpSecurity.build();
+    }
+
+    @Bean
+    public WebSecurityCustomizer webSecurityCustomizer() {
+        return (web) -> web.ignoring().requestMatchers(
+                "/v3/api-docs/**",
+                "/swagger-ui/**",
+                "/swagger-ui.html",
+                "/swagger-resources/**",
+                "/webjars/**");
     }
 
     /**
@@ -89,7 +121,8 @@ public class SecurityConfig {
     @Bean
     JwtEncoder jwtEncoder() throws IOException {
         RSAPublicKey publicKey = (RSAPublicKey) RsaKeyConverters.x509().convert(publicKeyResource.getInputStream());
-        RSAPrivateKey privateKey = (RSAPrivateKey) RsaKeyConverters.pkcs8().convert(privateKeyResource.getInputStream());
+        RSAPrivateKey privateKey = (RSAPrivateKey) RsaKeyConverters.pkcs8()
+                .convert(privateKeyResource.getInputStream());
         JWK jwk = new RSAKey.Builder(publicKey).privateKey(privateKey).build();
         var jwks = new ImmutableJWKSet<>(new JWKSet(jwk));
         return new NimbusJwtEncoder(jwks);
@@ -111,12 +144,14 @@ public class SecurityConfig {
         var converter = new JwtAuthenticationConverter();
         converter.setJwtGrantedAuthoritiesConverter(jwt -> {
             List<String> roles = jwt.getClaimAsStringList("roles");
-            if (roles == null) roles = jwt.getClaimAsStringList("scope");
-            if (roles == null) return List.of();
+            if (roles == null)
+                roles = jwt.getClaimAsStringList("scope");
+            if (roles == null)
+                return List.of();
             return roles.stream()
-                        .map(r -> (org.springframework.security.core.GrantedAuthority)
-                                   new SimpleGrantedAuthority(r.startsWith("ROLE_") ? r : "ROLE_" + r))
-                        .collect(java.util.stream.Collectors.toList());
+                    .map(r -> (org.springframework.security.core.GrantedAuthority) new SimpleGrantedAuthority(
+                            r.startsWith("ROLE_") ? r : "ROLE_" + r))
+                    .collect(java.util.stream.Collectors.toList());
         });
         return converter;
     }
