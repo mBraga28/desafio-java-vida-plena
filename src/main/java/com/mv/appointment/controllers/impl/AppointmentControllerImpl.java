@@ -3,7 +3,9 @@ package com.mv.appointment.controllers.impl;
 import com.mv.appointment.controllers.AppointmentController;
 import com.mv.appointment.domain.entities.Appointment;
 import com.mv.appointment.dtos.AppointmentDTO;
+import com.mv.appointment.dtos.AppointmentCreateDTO;
 import com.mv.appointment.dtos.AppointmentStatusDTO;
+import com.mv.appointment.dtos.AppointmentUpdateDTO;
 import com.mv.appointment.services.AppointmentService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -42,7 +44,7 @@ public class AppointmentControllerImpl implements AppointmentController {
     })
     @Override
     @PostMapping
-    public ResponseEntity<AppointmentDTO> create(@RequestBody AppointmentDTO appointmentDTO) {
+    public ResponseEntity<AppointmentDTO> create(@RequestBody AppointmentCreateDTO appointmentDTO) {
         Appointment createdAppointment = modelMapper.map(appointmentDTO, Appointment.class);
         Appointment savedAppointment = appointmentService.create(createdAppointment);
         return ResponseEntity.status(HttpStatus.CREATED).body(modelMapper.map(savedAppointment, AppointmentDTO.class));
@@ -82,8 +84,8 @@ public class AppointmentControllerImpl implements AppointmentController {
     })
     @Override
     @PutMapping(value = { "/{id}" })
-    public ResponseEntity<AppointmentDTO> update(@PathVariable Long id, @RequestBody AppointmentDTO newStatus) {
-        Appointment appointment = modelMapper.map(newStatus, Appointment.class);
+    public ResponseEntity<AppointmentDTO> update(@PathVariable Long id, @RequestBody AppointmentUpdateDTO appointmentDto) {
+        Appointment appointment = modelMapper.map(appointmentDto, Appointment.class);
         appointment.setId(id);
         Appointment updatedAppointment = appointmentService.update(appointment);
         return ResponseEntity.ok().body(modelMapper.map(updatedAppointment, AppointmentDTO.class));
