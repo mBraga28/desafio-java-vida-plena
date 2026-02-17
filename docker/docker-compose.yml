@@ -1,0 +1,35 @@
+version: '3.9'
+
+services:
+  postgres:
+    container_name: vida-plena_db
+    image: postgres:16-alpine
+    restart: always
+    ports:
+      - 5433:5432
+    environment:
+      - POSTGRES_PASSWORD=123456
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=vida-plena
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5  
+
+  app:
+    container_name: vida_plena_app
+    image: vida-plena-app 
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "8080:8080"  
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/vida-plena 
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=123456
+    depends_on:
+      postgres:
+        condition: service_healthy  
