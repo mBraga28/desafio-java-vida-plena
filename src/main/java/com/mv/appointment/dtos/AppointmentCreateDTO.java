@@ -1,7 +1,6 @@
 package com.mv.appointment.dtos;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.mv.appointment.domain.enums.AppointmentStatus;
 
 import java.time.LocalDateTime;
 
@@ -14,8 +13,6 @@ public class AppointmentCreateDTO {
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime appointmentDateTime;
 
-    private AppointmentStatus status;
-
     public AppointmentCreateDTO() {
     }
 
@@ -24,7 +21,6 @@ public class AppointmentCreateDTO {
         this.doctorName = doctorName;
         this.specialty = specialty;
         this.appointmentDateTime = appointmentDateTime;
-        this.status = AppointmentStatus.SCHEDULED;
     }
 
     public String getPatientName() {
@@ -57,13 +53,5 @@ public class AppointmentCreateDTO {
 
     public void setAppointmentDateTime(LocalDateTime appointmentDateTime) {
         this.appointmentDateTime = appointmentDateTime;
-    }
-
-    public AppointmentStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(AppointmentStatus status) {
-        this.status = status;
     }
 }
