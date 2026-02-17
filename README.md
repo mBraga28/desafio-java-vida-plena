@@ -21,6 +21,22 @@ O projeto inclui autenticação JWT, controle de acesso por roles, documentaçã
 
 ---
 
+## 📥 Como baixar o projeto
+
+Para clonar o repositório, utilize o comando abaixo no seu terminal:
+
+```bash
+git clone https://github.com/mBraga28/desafio-java-vida-plena.git
+```
+
+Após clonar, entre na pasta do projeto:
+
+```bash
+cd desafio-java-vida-plena
+```
+
+---
+
 ## ▶️ Como rodar o projeto
 
 ### ✅ Pré-requisitos
